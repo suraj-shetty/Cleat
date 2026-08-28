@@ -426,21 +426,36 @@ Before tagging, run the manual gate that CI structurally cannot cover:
 
 ---
 
-## 7. Sequencing
+## 7. Status
 
-Build it in this order; each step is useful on its own.
+Steps 1-4 below are **done and committed**. Step 5 is not, and is optional.
 
-1. **`git init` + push.** Nothing else is possible first.
-2. **`ci.yml`.** No secrets, immediate value, catches Swift 6 concurrency
-   regressions and QA-harness compile breaks.
-3. **The two `build-dmg.sh` patches** (§5.1). Small, testable locally.
-4. **`release.yml`.** Test it against a `v0.0.1-test` tag on a private repo, and
-   delete the release afterwards. Notarisation failures are far easier to debug
-   before there is a real release riding on them.
-5. **`mount-qa.yml`.** Last, and only if you have a self-hosted Mac. The value is
-   real but the setup cost is the highest of the four.
+| | State |
+|---|---|
+| `git init`, initial commit on `main` | done (no remote yet) |
+| `.github/workflows/ci.yml` | done |
+| `.github/workflows/release.yml` | done |
+| `build-dmg.sh` version pass-through | done |
+| `Cleat.xcodeproj/` gitignored | done |
+| `mount-qa.yml` | not built — needs a self-hosted Mac (§4) |
 
----
+### What is left for you
+
+1. Create the GitHub remote and push:
+   ```bash
+   gh repo create cleat --private --source=. --push
+   ```
+2. Add the seven secrets from §1.4.
+3. Rehearse with a throwaway tag on the private repo, then delete the release:
+   ```bash
+   git tag v0.0.1-test && git push origin v0.0.1-test
+   gh run watch
+   gh release delete v0.0.1-test --yes && git push --delete origin v0.0.1-test
+   ```
+4. Ship for real: `git tag -a v1.0.0 -m "Cleat 1.0.0" && git push origin v1.0.0`.
+
+`release.yml` also accepts `workflow_dispatch` with a tag input, so a failed
+release can be retried from the Actions tab without re-tagging.
 
 ## 8. Things to reconsider later
 
