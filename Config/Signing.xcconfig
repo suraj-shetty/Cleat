@@ -1,0 +1,17 @@
+// Signing configuration.
+//
+// DEVELOPMENT_TEAM must stay in sync with BuildConfiguration.expectedTeamIdentifier
+// in Shared/BuildConfiguration.swift — the helper cross-checks the two at runtime
+// and refuses XPC connections if they disagree.
+//
+// CODE_SIGN_IDENTITY is left ad-hoc ("-") so ordinary local builds work offline with
+// no certificate. Scripts/build-dmg.sh overrides it with the real Developer ID for a
+// distributable build; see README for how the requirement tightens as a result.
+
+DEVELOPMENT_TEAM = CYY72W5P5F
+
+// Manual, not Automatic: with a team set, automatic signing would go looking for a
+// provisioning profile this app does not need and cannot use.
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = -
+CODE_SIGN_INJECT_BASE_ENTITLEMENTS = NO

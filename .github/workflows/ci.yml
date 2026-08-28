@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen xcbeautify
+
+      - name: Generate project
+        run: xcodegen generate
+
+      # Signing is not what this job tests. Skipping it removes a whole class of
+      # keychain flakiness and keeps secrets off the pull-request path entirely.
+      - name: Build (Debug, unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Cleat.xcodeproj \
+            -scheme Cleat \
+            -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build | xcbeautify
+
+      # With no bsdname argument this compiles all three QA harnesses — so a
+      # compile break in any of them fails CI — and runs the two that need no
+      # live NTFS volume. See Tests/QA/run.sh.
+      - name: QA harnesses (no volume required)
+        run: Tests/QA/run.sh
