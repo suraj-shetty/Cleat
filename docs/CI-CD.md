@@ -120,12 +120,12 @@ concurrency:
 
 jobs:
   build:
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_26.app
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -294,13 +294,13 @@ permissions:
 
 jobs:
   release:
-    runs-on: macos-15
+    runs-on: macos-26
     env:
       DEVELOPMENT_TEAM: CYY72W5P5F
     steps:
       - uses: actions/checkout@v4
 
-      - run: sudo xcode-select -s /Applications/Xcode_26.app
+      - run: sudo xcode-select -s /Applications/Xcode_26.6.app
       - run: brew install xcodegen
       - run: xcodegen generate
 
