@@ -8,7 +8,7 @@
 ![macOS 15+](https://img.shields.io/badge/macOS-15%20Sequoia%20%7C%2026%20Tahoe-black?logo=apple)
 ![Apple Silicon](https://img.shields.io/badge/Apple%20Silicon-arm64-555)
 ![Swift 6](https://img.shields.io/badge/Swift-6-F05138?logo=swift&logoColor=white)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-lightgrey.svg)](LICENSE)
 
 </div>
 
@@ -267,7 +267,9 @@ and its bridge, not the driver.
 
 ## License
 
-Cleat is released under the [MIT License](LICENSE).
+Cleat's source is available to view and to use for non-commercial purposes under a
+proprietary [source-available license](LICENSE). Commercial use requires permission
+from the copyright holder.
 
 Cleat doesn't bundle or link its dependencies — it launches them as separate programs.
 **ntfs-3g** is licensed under the GNU GPL, and **FUSE-T** under its own terms; each is
