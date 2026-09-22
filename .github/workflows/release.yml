@@ -97,7 +97,11 @@ jobs:
           echo "Team $TEAM confirmed."
 
       # build-dmg.sh takes a notarytool keychain profile, so create one from the
-      # App Store Connect API key rather than changing the script.
+      # App Store Connect API key rather than changing the script. No --keychain
+      # here: passing the CI keychain's path crashes notarytool (Trace/BPT trap).
+      # The earlier `security list-keychain -s "$KEYCHAIN_PATH" ...` already put
+      # it first in the default search list, which is what this and the later
+      # `notarytool submit --keychain-profile ci` (in build-dmg.sh) both use.
       - name: Prepare notarytool credentials
         env:
           NOTARY_KEY_BASE64: ${{ secrets.NOTARY_KEY_BASE64 }}
@@ -109,8 +113,7 @@ jobs:
           xcrun notarytool store-credentials ci \
             --key "$RUNNER_TEMP/AuthKey.p8" \
             --key-id "$NOTARY_KEY_ID" \
-            --issuer "$NOTARY_ISSUER_ID" \
-            --keychain "$KEYCHAIN_PATH"
+            --issuer "$NOTARY_ISSUER_ID"
           rm -f "$RUNNER_TEMP/AuthKey.p8"
 
       - name: Build, sign, notarise, staple
