@@ -95,6 +95,8 @@ jobs:
             echo "The helper would refuse XPC connections from this build."
             exit 1; }
           echo "Team $TEAM confirmed."
+          echo "Identities in CI keychain (compare against SIGN_IDENTITY secret exactly):"
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH"
 
       # `notarytool store-credentials` reliably crashes (Trace/BPT trap) on this
       # runner/Xcode combo even with a verified-good key, both with and without
