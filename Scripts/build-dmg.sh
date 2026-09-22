@@ -71,16 +71,31 @@ if [ -n "${SIGN_IDENTITY:-}" ]; then
   codesign --force --sign "$SIGN_IDENTITY" "$DMG"
 fi
 
+notarise() {
+  # notarytool exits 0 even when Apple rejects the submission — the failure
+  # only shows up in the "status:" line of --wait's own output. Check it
+  # explicitly and pull the rejection log before stapling, or `stapler staple`
+  # fails later with an opaque "Record not found" instead of the real reason.
+  local out
+  out=$(xcrun notarytool submit "$DMG" "$@" --wait 2>&1) || { echo "$out"; exit 1; }
+  echo "$out"
+  local id
+  id=$(echo "$out" | awk '/^  id:/{print $2; exit}')
+  if ! echo "$out" | grep -q "status: Accepted"; then
+    echo "==> Notarisation rejected; fetching log for $id"
+    xcrun notarytool log "$id" "$@" || true
+    exit 1
+  fi
+}
+
 if [ -n "${NOTARY_PROFILE:-}" ]; then
   echo "==> Notarising (keychain profile)"
-  xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
+  notarise --keychain-profile "$NOTARY_PROFILE"
   xcrun stapler staple "$DMG"
   xcrun stapler validate "$DMG"
 elif [ -n "${NOTARY_KEY_PATH:-}" ]; then
   echo "==> Notarising (API key)"
-  xcrun notarytool submit "$DMG" \
-    --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" \
-    --wait
+  notarise --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID"
   xcrun stapler staple "$DMG"
   xcrun stapler validate "$DMG"
 else
