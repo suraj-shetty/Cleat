@@ -96,33 +96,28 @@ jobs:
             exit 1; }
           echo "Team $TEAM confirmed."
 
-      # build-dmg.sh takes a notarytool keychain profile, so create one from the
-      # App Store Connect API key rather than changing the script. No --keychain
-      # here: passing the CI keychain's path crashes notarytool (Trace/BPT trap).
-      # The earlier `security list-keychain -s "$KEYCHAIN_PATH" ...` already put
-      # it first in the default search list, which is what this and the later
-      # `notarytool submit --keychain-profile ci` (in build-dmg.sh) both use.
-      - name: Prepare notarytool credentials
+      # `notarytool store-credentials` reliably crashes (Trace/BPT trap) on this
+      # runner/Xcode combo even with a verified-good key, both with and without
+      # --keychain — so skip the keychain profile entirely and hand the API key
+      # straight to `notarytool submit` (build-dmg.sh's NOTARY_KEY_PATH path).
+      - name: Decode notary key
         env:
           NOTARY_KEY_BASE64: ${{ secrets.NOTARY_KEY_BASE64 }}
-          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
-          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
         run: |
           set -euo pipefail
           echo -n "$NOTARY_KEY_BASE64" | base64 --decode -o "$RUNNER_TEMP/AuthKey.p8"
-          xcrun notarytool store-credentials ci \
-            --key "$RUNNER_TEMP/AuthKey.p8" \
-            --key-id "$NOTARY_KEY_ID" \
-            --issuer "$NOTARY_ISSUER_ID"
-          rm -f "$RUNNER_TEMP/AuthKey.p8"
 
       - name: Build, sign, notarise, staple
         env:
           SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
-          NOTARY_PROFILE: ci
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
           MARKETING_VERSION: ${{ steps.version.outputs.marketing }}
           CURRENT_PROJECT_VERSION: ${{ github.run_number }}
-        run: Scripts/build-dmg.sh
+        run: |
+          export NOTARY_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          Scripts/build-dmg.sh
+          rm -f "$RUNNER_TEMP/AuthKey.p8"
 
       # Each check here maps to a specific way this app fails in a user's hands.
       - name: Verify the shipped artefact

@@ -11,6 +11,10 @@
 #   SIGN_IDENTITY          e.g. "Developer ID Application: Your Name (TEAMID)"
 #   NOTARY_PROFILE         a notarytool keychain profile you created with
 #                          `xcrun notarytool store-credentials`
+#   NOTARY_KEY_PATH        alternative to NOTARY_PROFILE: path to an App Store
+#   NOTARY_KEY_ID          Connect API .p8 key, its Key ID and Issuer ID,
+#   NOTARY_ISSUER_ID       passed straight to `notarytool submit`. Use this on
+#                          CI runners where `store-credentials` crashes.
 #   MARKETING_VERSION      optional; overrides the 1.0 in project.yml
 #   CURRENT_PROJECT_VERSION optional; overrides the build number in project.yml
 #
@@ -68,12 +72,19 @@ if [ -n "${SIGN_IDENTITY:-}" ]; then
 fi
 
 if [ -n "${NOTARY_PROFILE:-}" ]; then
-  echo "==> Notarising"
+  echo "==> Notarising (keychain profile)"
   xcrun notarytool submit "$DMG" --keychain-profile "$NOTARY_PROFILE" --wait
   xcrun stapler staple "$DMG"
   xcrun stapler validate "$DMG"
+elif [ -n "${NOTARY_KEY_PATH:-}" ]; then
+  echo "==> Notarising (API key)"
+  xcrun notarytool submit "$DMG" \
+    --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" \
+    --wait
+  xcrun stapler staple "$DMG"
+  xcrun stapler validate "$DMG"
 else
-  echo "==> Skipping notarisation (NOTARY_PROFILE not set)"
+  echo "==> Skipping notarisation (NOTARY_PROFILE/NOTARY_KEY_PATH not set)"
 fi
 
 echo "Done: $DMG"
