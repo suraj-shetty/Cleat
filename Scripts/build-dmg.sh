@@ -68,7 +68,7 @@ DMG="$BUILD_DIR/$APP_NAME.dmg"
 hdiutil create -volname "$APP_NAME" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
 
 if [ -n "${SIGN_IDENTITY:-}" ]; then
-  codesign --force --sign "$SIGN_IDENTITY" "$DMG"
+  codesign --force --timestamp --sign "$SIGN_IDENTITY" "$DMG"
 fi
 
 notarise() {
